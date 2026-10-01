@@ -10,69 +10,66 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# --- High-Contrast Styling ---
+# --- Clean CSS: Works automatically in BOTH Light Mode & Dark Mode ---
 st.markdown("""
 <style>
-    * {
-        color: #111111 !important;
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    }
+    /* Category Section Headers (Clean Green Banner) */
     .cat-header {
         background-color: #1b4d2e !important;
         color: #ffffff !important;
-        padding: 10px 16px;
+        padding: 9px 14px;
         border-radius: 6px;
         font-weight: 700;
-        font-size: 18px !important;
-        margin-top: 24px;
+        font-size: 17px !important;
+        margin-top: 20px;
         margin-bottom: 8px;
-        letter-spacing: 0.5px;
+        letter-spacing: 0.4px;
     }
     .cat-header * {
         color: #ffffff !important;
     }
-    div[data-testid="stMetricValue"] {
-        font-size: 28px !important;
-        font-weight: 800 !important;
-        color: #1b4d2e !important;
-    }
-    div[data-testid="stMetricLabel"] {
-        font-size: 15px !important;
-        font-weight: 600 !important;
-        color: #222222 !important;
-    }
+
+    /* Badges that look sharp in both Light and Dark themes */
     .badge-order {
-        background-color: #fee2e2;
-        color: #b91c1c !important;
-        padding: 4px 10px;
+        background-color: rgba(239, 68, 68, 0.2) !important;
+        color: #ef4444 !important;
+        border: 1px solid rgba(239, 68, 68, 0.4);
+        padding: 3px 8px;
         border-radius: 4px;
         font-weight: 700;
-        font-size: 14px;
+        font-size: 13px;
         display: inline-block;
     }
     .badge-ok {
-        background-color: #dcfce7;
-        color: #15803d !important;
-        padding: 4px 10px;
+        background-color: rgba(34, 197, 94, 0.2) !important;
+        color: #22c55e !important;
+        border: 1px solid rgba(34, 197, 94, 0.4);
+        padding: 3px 8px;
         border-radius: 4px;
         font-weight: 700;
-        font-size: 14px;
+        font-size: 13px;
         display: inline-block;
     }
-    input[type=number], input[type=text] {
-        font-size: 15px !important;
-        font-weight: 600 !important;
-        color: #000000 !important;
-        background-color: #ffffff !important;
-        border: 1.5px solid #cbd5e1 !important;
-        border-radius: 6px !important;
+
+    /* Column Header text styling */
+    .col-header {
+        font-weight: 700;
+        font-size: 14px;
+        padding-bottom: 4px;
+        opacity: 0.9;
+    }
+
+    /* Product row label */
+    .prod-name {
+        font-size: 15px;
+        font-weight: 600;
+        padding-top: 6px;
     }
 </style>
 """, unsafe_allow_html=True)
 
 DB_FILE = "pizzeria_stock.db"
 
-# All items initialized with Par Level = 0 and Count = 0
 CATALOG = [
     # 1. PÂTE & BASES
     ("1. PÂTE & BASES", "Farine (Flour) (sac 25kg)", 0, 0, ""),
@@ -108,7 +105,7 @@ CATALOG = [
     ("3. VIANDES & POISSONS", "Chorizo (kg)", 0, 0, ""),
     ("3. VIANDES & POISSONS", "Jambon de Parme (kg)", 0, 0, ""),
     ("3. VIANDES & POISSONS", "Magret de canard (kg)", 0, 0, ""),
-    ("3. VIANDES & Foie gras", "Foie gras (bloc / kg)", 0, 0, ""),
+    ("3. VIANDES & POISSONS", "Foie gras (bloc / kg)", 0, 0, ""),
     ("3. VIANDES & POISSONS", "Saumon fumé (kg)", 0, 0, ""),
     ("3. VIANDES & POISSONS", "Thon (boîte)", 0, 0, ""),
     ("3. VIANDES & POISSONS", "Anchois (bocal / boîte)", 0, 0, ""),
@@ -189,33 +186,38 @@ CATALOG = [
 def init_db():
     conn = sqlite3.connect(DB_FILE)
     c = conn.cursor()
-    # Recreate the table cleanly with proper schema
-    c.execute("DROP TABLE IF EXISTS stock")
-    c.execute("""
-        CREATE TABLE stock (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            category TEXT,
-            item TEXT UNIQUE,
-            par_level REAL DEFAULT 0,
-            current_count REAL DEFAULT 0,
-            notes TEXT DEFAULT ''
-        )
-    """)
-    c.executemany("""
-        INSERT INTO stock (category, item, par_level, current_count, notes)
-        VALUES (?, ?, ?, ?, ?)
-    """, CATALOG)
-    conn.commit()
+    c.execute("SELECT count(*) FROM sqlite_master WHERE type='table' AND name='stock'")
+    table_exists = c.fetchone()[0] > 0
+    
+    # Auto-repair if previous buggy schema had Sacs poubelle as category
+    recreate = False
+    if table_exists:
+        c.execute("SELECT count(*) FROM stock WHERE category LIKE '%Sacs poubelle%'")
+        if c.fetchone()[0] > 0:
+            recreate = True
+    else:
+        recreate = True
+
+    if recreate:
+        c.execute("DROP TABLE IF EXISTS stock")
+        c.execute("""
+            CREATE TABLE stock (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                category TEXT,
+                item TEXT UNIQUE,
+                par_level REAL DEFAULT 0,
+                current_count REAL DEFAULT 0,
+                notes TEXT DEFAULT ''
+            )
+        """)
+        c.executemany("""
+            INSERT INTO stock (category, item, par_level, current_count, notes)
+            VALUES (?, ?, ?, ?, ?)
+        """, CATALOG)
+        conn.commit()
     conn.close()
 
-# Only run once if empty or resetting
-conn = sqlite3.connect(DB_FILE)
-c = conn.cursor()
-c.execute("SELECT count(*) FROM sqlite_master WHERE type='table' AND name='stock'")
-exists = c.fetchone()[0] > 0
-conn.close()
-if not exists:
-    init_db()
+init_db()
 
 def get_stock():
     conn = sqlite3.connect(DB_FILE)
@@ -236,23 +238,8 @@ def update_item_value(item_id, current_count, par_level, notes):
     conn.commit()
     conn.close()
 
-def reset_all_to_zero():
-    conn = sqlite3.connect(DB_FILE)
-    c = conn.cursor()
-    c.execute("UPDATE stock SET current_count = 0, par_level = 0")
-    conn.commit()
-    conn.close()
-
-# --- Title & Top Header ---
+# --- Title Header ---
 st.title("🍕 Pizza Bonici Rouffiac: Inventory")
-
-# Quick button to reset all values to 0 anytime
-with st.sidebar:
-    st.header("⚙️ Paramètres")
-    if st.button("🔄 Réinitialiser tous les stocks à 0"):
-        reset_all_to_zero()
-        st.success("Tous les articles ont été remis à 0.")
-        st.rerun()
 
 df = get_stock()
 
@@ -271,26 +258,26 @@ selected_category = st.selectbox("Sélectionner une Section :", categories)
 
 sections_to_show = sorted(df["category"].unique().tolist()) if selected_category == "Toutes les Sections" else [selected_category]
 
-# --- Native, High-Contrast Inventory Grid ---
+# --- Inventory Table Grid ---
 for sec in sections_to_show:
     st.markdown(f"<div class='cat-header'>{sec}</div>", unsafe_allow_html=True)
     sec_df = df[df["category"] == sec]
 
     # Header Row
     cols = st.columns([3.5, 1.2, 1.2, 1.2, 1.3, 2.5])
-    cols[0].markdown("**Produit**")
-    cols[1].markdown("**Stock Idéal**")
-    cols[2].markdown("**Stock Réel**")
-    cols[3].markdown("**À Commander**")
-    cols[4].markdown("**Statut**")
-    cols[5].markdown("**Notes / Emplacement**")
+    cols[0].markdown("<div class='col-header'>Produit</div>", unsafe_allow_html=True)
+    cols[1].markdown("<div class='col-header'>Stock Idéal</div>", unsafe_allow_html=True)
+    cols[2].markdown("<div class='col-header'>Stock Réel</div>", unsafe_allow_html=True)
+    cols[3].markdown("<div class='col-header'>À Commander</div>", unsafe_allow_html=True)
+    cols[4].markdown("<div class='col-header'>Statut</div>", unsafe_allow_html=True)
+    cols[5].markdown("<div class='col-header'>Notes / Emplacement</div>", unsafe_allow_html=True)
 
     # Product Rows
     for _, row in sec_df.iterrows():
         c0, c1, c2, c3, c4, c5 = st.columns([3.5, 1.2, 1.2, 1.2, 1.3, 2.5])
         
-        # Crisp Product Title
-        c0.markdown(f"<div style='font-size:15px; font-weight:600; padding-top:6px; color:#111111;'>{row['item']}</div>", unsafe_allow_html=True)
+        # Product Title
+        c0.markdown(f"<div class='prod-name'>{row['item']}</div>", unsafe_allow_html=True)
         
         # Stock Idéal
         new_par = c1.number_input(
@@ -314,9 +301,9 @@ for sec in sections_to_show:
 
         # À Commander
         diff = max(0, new_par - new_count)
-        c3.markdown(f"<div style='font-size:16px; font-weight:700; padding-top:6px; color:#111;'>{diff}</div>", unsafe_allow_html=True)
+        c3.markdown(f"<div style='font-size:16px; font-weight:700; padding-top:6px;'>{diff}</div>", unsafe_allow_html=True)
         
-        # Statut Badge
+        # Statut Badge (compatible with dark and light backgrounds)
         if diff > 0:
             c4.markdown("<div style='padding-top:4px;'><span class='badge-order'>🚨 ORDER</span></div>", unsafe_allow_html=True)
         else:
@@ -331,7 +318,7 @@ for sec in sections_to_show:
             label_visibility="collapsed"
         )
 
-        # Direct database sync if modified
+        # Sync changes to SQLite
         if (new_count != row['current_count']) or (new_par != row['par_level']) or (new_note != row['notes']):
             update_item_value(row['id'], new_count, new_par, new_note)
 
