@@ -13,7 +13,7 @@ st.set_page_config(
 # --- High-Contrast, Deep Black Styling ---
 st.markdown("""
 <style>
-    /* Force pure dark colors and readable typography */
+    /* Force dark, crisp typography */
     * {
         color: #111111 !important;
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -47,32 +47,6 @@ st.markdown("""
         color: #222222 !important;
     }
 
-    /* Crisp Custom Table */
-    .stock-table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-bottom: 20px;
-        font-size: 16px !important;
-    }
-    .stock-table th {
-        background-color: #f2f5f3;
-        color: #111111 !important;
-        font-weight: 700;
-        text-align: left;
-        padding: 10px 12px;
-        border-bottom: 2px solid #1b4d2e;
-    }
-    .stock-table td {
-        padding: 8px 12px;
-        border-bottom: 1px solid #e0e0e0;
-        vertical-align: middle;
-        color: #111111 !important;
-        font-weight: 500;
-    }
-    .stock-table tr:hover {
-        background-color: #fafafa;
-    }
-
     /* Badges */
     .badge-order {
         background-color: #fee2e2;
@@ -93,15 +67,14 @@ st.markdown("""
         display: inline-block;
     }
 
-    /* Make number inputs large and visible */
-    input[type=number] {
-        font-size: 16px !important;
+    /* Input styling */
+    input[type=number], input[type=text] {
+        font-size: 15px !important;
         font-weight: 600 !important;
         color: #000000 !important;
         background-color: #ffffff !important;
         border: 1.5px solid #cbd5e1 !important;
         border-radius: 6px !important;
-        padding: 6px 10px !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -224,20 +197,34 @@ CATALOG = [
 def init_db():
     conn = sqlite3.connect(DB_FILE)
     c = conn.cursor()
-    c.execute("""
-        CREATE TABLE IF NOT EXISTS stock (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            category TEXT,
-            item TEXT UNIQUE,
-            par_level REAL DEFAULT 0,
-            current_count REAL DEFAULT 0,
-            notes TEXT DEFAULT ''
-        )
-    """)
-    conn.commit()
+    c.execute("SELECT count(*) FROM sqlite_master WHERE type='table' AND name='stock'")
+    table_exists = c.fetchone()[0] > 0
+    
+    # Auto-repair if previous buggy schema inverted "Sacs poubelle" or par levels are all 0
+    recreate = False
+    if table_exists:
+        c.execute("SELECT count(*) FROM stock WHERE category LIKE '%Sacs poubelle%'")
+        if c.fetchone()[0] > 0:
+            recreate = True
+        c.execute("SELECT sum(par_level) FROM stock")
+        val = c.fetchone()[0]
+        if val is None or val == 0:
+            recreate = True
+    else:
+        recreate = True
 
-    c.execute("SELECT count(*) FROM stock")
-    if c.fetchone()[0] == 0:
+    if recreate:
+        c.execute("DROP TABLE IF EXISTS stock")
+        c.execute("""
+            CREATE TABLE stock (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                category TEXT,
+                item TEXT UNIQUE,
+                par_level REAL DEFAULT 0,
+                current_count REAL DEFAULT 0,
+                notes TEXT DEFAULT ''
+            )
+        """)
         c.executemany("""
             INSERT INTO stock (category, item, par_level, current_count, notes)
             VALUES (?, ?, ?, ?, ?)
@@ -255,7 +242,7 @@ def get_stock():
     df["status"] = df["order_needed"].apply(lambda x: "ORDER" if x > 0 else "OK")
     return df
 
-def save_single_item(item_id, current_count, par_level, notes):
+def update_item_value(item_id, current_count, par_level, notes):
     conn = sqlite3.connect(DB_FILE)
     c = conn.cursor()
     c.execute("""
@@ -291,7 +278,7 @@ for sec in sections_to_show:
     st.markdown(f"<div class='cat-header'>{sec}</div>", unsafe_allow_html=True)
     sec_df = df[df["category"] == sec]
 
-    # Render Header Row
+    # Header Row
     cols = st.columns([3.5, 1.2, 1.2, 1.2, 1.3, 2.5])
     cols[0].markdown("**Produit**")
     cols[1].markdown("**Stock Idéal**")
@@ -300,14 +287,14 @@ for sec in sections_to_show:
     cols[4].markdown("**Statut**")
     cols[5].markdown("**Notes / Emplacement**")
 
-    # Render each row with crisp HTML text & inputs
+    # Product Rows
     for _, row in sec_df.iterrows():
         c0, c1, c2, c3, c4, c5 = st.columns([3.5, 1.2, 1.2, 1.2, 1.3, 2.5])
         
-        # Product name (pure black, crisp font)
-        c0.markdown(f"<span style='font-size:15px; font-weight:600; color:#111111;'>{row['item']}</span>", unsafe_allow_html=True)
+        # Crisp Product Title
+        c0.markdown(f"<div style='font-size:15px; font-weight:600; padding-top:6px; color:#111111;'>{row['item']}</div>", unsafe_allow_html=True)
         
-        # Ideal Par Level
+        # Stock Idéal
         new_par = c1.number_input(
             label=f"par_{row['id']}",
             value=int(row['par_level']),
@@ -317,7 +304,7 @@ for sec in sections_to_show:
             label_visibility="collapsed"
         )
 
-        # Real Count
+        # Stock Réel
         new_count = c2.number_input(
             label=f"count_{row['id']}",
             value=int(row['current_count']),
@@ -327,10 +314,11 @@ for sec in sections_to_show:
             label_visibility="collapsed"
         )
 
-        # Order Needed & Status Badge
+        # À Commander
         diff = max(0, new_par - new_count)
         c3.markdown(f"<div style='font-size:16px; font-weight:700; padding-top:6px; color:#111;'>{diff}</div>", unsafe_allow_html=True)
         
+        # Statut Badge
         if diff > 0:
             c4.markdown("<div style='padding-top:4px;'><span class='badge-order'>🚨 ORDER</span></div>", unsafe_allow_html=True)
         else:
@@ -345,19 +333,20 @@ for sec in sections_to_show:
             label_visibility="collapsed"
         )
 
-        # Auto-save changes immediately on edit
+        # Direct database sync if modified
         if (new_count != row['current_count']) or (new_par != row['par_level']) or (new_note != row['notes']):
-            save_single_item(row['id'], new_count, new_par, new_note)
-            st.rerun()
+            update_item_value(row['id'], new_count, new_par, new_note)
 
 # --- WhatsApp Order Summary ---
 st.write("")
 with st.expander("📲 Voir le récapitulatif pour commande WhatsApp"):
-    if to_order.empty:
+    fresh_df = get_stock()
+    fresh_order = fresh_df[fresh_df["order_needed"] > 0]
+    if fresh_order.empty:
         st.info("🎉 Aucun article à commander !")
     else:
         text_out = "📋 *COMMANDE PIZZA BONICI ROUFFIAC* :\n\n"
-        for sec_name, group in to_order.groupby("category"):
+        for sec_name, group in fresh_order.groupby("category"):
             text_out += f"*{sec_name}* :\n"
             for _, r in group.iterrows():
                 qty = int(r["order_needed"]) if r["order_needed"].is_integer() else r["order_needed"]
