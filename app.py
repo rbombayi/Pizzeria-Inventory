@@ -10,16 +10,13 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# --- High-Contrast, Deep Black Styling ---
+# --- High-Contrast Styling ---
 st.markdown("""
 <style>
-    /* Force dark, crisp typography */
     * {
         color: #111111 !important;
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     }
-    
-    /* Category Section Headers (Clean Dark Green Banners) */
     .cat-header {
         background-color: #1b4d2e !important;
         color: #ffffff !important;
@@ -34,8 +31,6 @@ st.markdown("""
     .cat-header * {
         color: #ffffff !important;
     }
-
-    /* KPI Summary Cards */
     div[data-testid="stMetricValue"] {
         font-size: 28px !important;
         font-weight: 800 !important;
@@ -46,8 +41,6 @@ st.markdown("""
         font-weight: 600 !important;
         color: #222222 !important;
     }
-
-    /* Badges */
     .badge-order {
         background-color: #fee2e2;
         color: #b91c1c !important;
@@ -66,8 +59,6 @@ st.markdown("""
         font-size: 14px;
         display: inline-block;
     }
-
-    /* Input styling */
     input[type=number], input[type=text] {
         font-size: 15px !important;
         font-weight: 600 !important;
@@ -81,158 +72,150 @@ st.markdown("""
 
 DB_FILE = "pizzeria_stock.db"
 
+# All items initialized with Par Level = 0 and Count = 0
 CATALOG = [
     # 1. PÂTE & BASES
-    ("1. PÂTE & BASES", "Farine (Flour) (sac 25kg)", 10, 0, ""),
-    ("1. PÂTE & BASES", "Huile (Oil) (bidon 5L)", 4, 0, ""),
-    ("1. PÂTE & BASES", "Levure (Yeast) (boîte / kg)", 4, 0, ""),
-    ("1. PÂTE & BASES", "Sauce Tomate (boîte 2.5kg)", 12, 0, ""),
-    ("1. PÂTE & BASES", "Crème fraîche (brique 1L)", 8, 0, ""),
+    ("1. PÂTE & BASES", "Farine (Flour) (sac 25kg)", 0, 0, ""),
+    ("1. PÂTE & BASES", "Huile (Oil) (bidon 5L)", 0, 0, ""),
+    ("1. PÂTE & BASES", "Levure (Yeast) (boîte / kg)", 0, 0, ""),
+    ("1. PÂTE & BASES", "Sauce Tomate (boîte 2.5kg)", 0, 0, ""),
+    ("1. PÂTE & BASES", "Crème fraîche (brique 1L)", 0, 0, ""),
 
     # 2. FROMAGES
-    ("2. FROMAGES", "Emmental râpé (kg)", 35, 0, ""),
-    ("2. FROMAGES", "Mozzarella Fior Di Latte (seau kg)", 20, 0, ""),
-    ("2. FROMAGES", "Chèvre bûche (pièce / kg)", 6, 0, ""),
-    ("2. FROMAGES", "Roquefort (kg)", 4, 0, ""),
-    ("2. FROMAGES", "Camembert (pièce 250g)", 6, 0, ""),
-    ("2. FROMAGES", "Cheddar (paquet / kg)", 8, 0, ""),
-    ("2. FROMAGES", "Reblochon (pièce)", 5, 0, ""),
-    ("2. FROMAGES", "Raclette (kg)", 6, 0, ""),
-    ("2. FROMAGES", "Cabécou (pièce)", 10, 0, ""),
-    ("2. FROMAGES", "Gorgonzola (kg)", 4, 0, ""),
-    ("2. FROMAGES", "Copeaux de Parmesan (kg)", 4, 0, ""),
-    ("2. FROMAGES", "Burrata (pièce)", 8, 0, ""),
+    ("2. FROMAGES", "Emmental râpé (kg)", 0, 0, ""),
+    ("2. FROMAGES", "Mozzarella Fior Di Latte (seau kg)", 0, 0, ""),
+    ("2. FROMAGES", "Chèvre bûche (pièce / kg)", 0, 0, ""),
+    ("2. FROMAGES", "Roquefort (kg)", 0, 0, ""),
+    ("2. FROMAGES", "Camembert (pièce 250g)", 0, 0, ""),
+    ("2. FROMAGES", "Cheddar (paquet / kg)", 0, 0, ""),
+    ("2. FROMAGES", "Reblochon (pièce)", 0, 0, ""),
+    ("2. FROMAGES", "Raclette (kg)", 0, 0, ""),
+    ("2. FROMAGES", "Cabécou (pièce)", 0, 0, ""),
+    ("2. FROMAGES", "Gorgonzola (kg)", 0, 0, ""),
+    ("2. FROMAGES", "Copeaux de Parmesan (kg)", 0, 0, ""),
+    ("2. FROMAGES", "Burrata (pièce)", 0, 0, ""),
 
     # 3. VIANDES & POISSONS
-    ("3. VIANDES & POISSONS", "Jambon blanc (kg)", 15, 0, ""),
-    ("3. VIANDES & POISSONS", "Poulet émincé (kg)", 12, 0, ""),
-    ("3. VIANDES & POISSONS", "Lardons fumés (kg)", 8, 0, ""),
-    ("3. VIANDES & POISSONS", "Viande Kebab halal (kg)", 12, 0, ""),
-    ("3. VIANDES & POISSONS", "Merguez (paquet / kg)", 6, 0, ""),
-    ("3. VIANDES & POISSONS", "Bœuf haché (kg)", 8, 0, ""),
-    ("3. VIANDES & POISSONS", "Steak Black Angus (pièce 150g)", 25, 0, ""),
-    ("3. VIANDES & POISSONS", "Steak végétal (pièce)", 10, 0, ""),
-    ("3. VIANDES & POISSONS", "Bacon (paquet / kg)", 6, 0, ""),
-    ("3. VIANDES & POISSONS", "Chorizo (kg)", 6, 0, ""),
-    ("3. VIANDES & POISSONS", "Jambon de Parme (kg)", 5, 0, ""),
-    ("3. VIANDES & POISSONS", "Magret de canard (kg)", 4, 0, ""),
-    ("3. VIANDES & POISSONS", "Foie gras (bloc / kg)", 2, 0, ""),
-    ("3. VIANDES & POISSONS", "Saumon fumé (kg)", 4, 0, ""),
-    ("3. VIANDES & POISSONS", "Thon (boîte)", 6, 0, ""),
-    ("3. VIANDES & POISSONS", "Anchois (bocal / boîte)", 4, 0, ""),
-    ("3. VIANDES & POISSONS", "Œufs (plateau 30)", 3, 0, ""),
+    ("3. VIANDES & POISSONS", "Jambon blanc (kg)", 0, 0, ""),
+    ("3. VIANDES & POISSONS", "Poulet émincé (kg)", 0, 0, ""),
+    ("3. VIANDES & POISSONS", "Lardons fumés (kg)", 0, 0, ""),
+    ("3. VIANDES & POISSONS", "Viande Kebab halal (kg)", 0, 0, ""),
+    ("3. VIANDES & POISSONS", "Merguez (paquet / kg)", 0, 0, ""),
+    ("3. VIANDES & POISSONS", "Bœuf haché (kg)", 0, 0, ""),
+    ("3. VIANDES & POISSONS", "Steak Black Angus (pièce 150g)", 0, 0, ""),
+    ("3. VIANDES & POISSONS", "Steak végétal (pièce)", 0, 0, ""),
+    ("3. VIANDES & POISSONS", "Bacon (paquet / kg)", 0, 0, ""),
+    ("3. VIANDES & POISSONS", "Chorizo (kg)", 0, 0, ""),
+    ("3. VIANDES & POISSONS", "Jambon de Parme (kg)", 0, 0, ""),
+    ("3. VIANDES & POISSONS", "Magret de canard (kg)", 0, 0, ""),
+    ("3. VIANDES & Foie gras", "Foie gras (bloc / kg)", 0, 0, ""),
+    ("3. VIANDES & POISSONS", "Saumon fumé (kg)", 0, 0, ""),
+    ("3. VIANDES & POISSONS", "Thon (boîte)", 0, 0, ""),
+    ("3. VIANDES & POISSONS", "Anchois (bocal / boîte)", 0, 0, ""),
+    ("3. VIANDES & POISSONS", "Œufs (plateau 30)", 0, 0, ""),
 
     # 4. LÉGUMES & FRUITS
-    ("4. LÉGUMES & FRUITS", "Champignons frais (kg / cagette)", 8, 0, ""),
-    ("4. LÉGUMES & FRUITS", "Poivrons (kg)", 5, 0, ""),
-    ("4. LÉGUMES & FRUITS", "Aubergines (kg)", 4, 0, ""),
-    ("4. LÉGUMES & FRUITS", "Courgettes (kg)", 4, 0, ""),
-    ("4. LÉGUMES & FRUITS", "Oignons frais (filet 5kg)", 3, 0, ""),
-    ("4. LÉGUMES & FRUITS", "Oignons rouges (filet / kg)", 3, 0, ""),
-    ("4. LÉGUMES & FRUITS", "Oignons frits (sachet 1kg)", 4, 0, ""),
-    ("4. LÉGUMES & FRUITS", "Confit d'oignons (bocal)", 3, 0, ""),
-    ("4. LÉGUMES & FRUITS", "Pommes de terre (sac 10kg)", 3, 0, ""),
-    ("4. LÉGUMES & FRUITS", "Galettes de pomme de terre (carton)", 4, 0, ""),
-    ("4. LÉGUMES & FRUITS", "Tomates fraîches (kg / cagette)", 6, 0, ""),
-    ("4. LÉGUMES & FRUITS", "Tomates séchées (bocal kg)", 3, 0, ""),
-    ("4. LÉGUMES & FRUITS", "Roquette (sachet 500g)", 4, 0, ""),
-    ("4. LÉGUMES & FRUITS", "Salade verte (cagette / sachet)", 6, 0, ""),
-    ("4. LÉGUMES & FRUITS", "Olives noires (seau / bocal)", 3, 0, ""),
-    ("4. LÉGUMES & FRUITS", "Câpres (bocal)", 2, 0, ""),
-    ("4. LÉGUMES & FRUITS", "Ananas (boîte)", 3, 0, ""),
-    ("4. LÉGUMES & FRUITS", "Ail & Persil (botte / kg)", 2, 0, ""),
-    ("4. LÉGUMES & FRUITS", "Aneth / Citron (botte / pièce)", 2, 0, ""),
-    ("4. LÉGUMES & FRUITS", "Pignons de pin / Noix (sachet kg)", 2, 0, ""),
+    ("4. LÉGUMES & FRUITS", "Champignons frais (kg / cagette)", 0, 0, ""),
+    ("4. LÉGUMES & FRUITS", "Poivrons (kg)", 0, 0, ""),
+    ("4. LÉGUMES & FRUITS", "Aubergines (kg)", 0, 0, ""),
+    ("4. LÉGUMES & FRUITS", "Courgettes (kg)", 0, 0, ""),
+    ("4. LÉGUMES & FRUITS", "Oignons frais (filet 5kg)", 0, 0, ""),
+    ("4. LÉGUMES & FRUITS", "Oignons rouges (filet / kg)", 0, 0, ""),
+    ("4. LÉGUMES & FRUITS", "Oignons frits (sachet 1kg)", 0, 0, ""),
+    ("4. LÉGUMES & FRUITS", "Confit d'oignons (bocal)", 0, 0, ""),
+    ("4. LÉGUMES & FRUITS", "Pommes de terre (sac 10kg)", 0, 0, ""),
+    ("4. LÉGUMES & FRUITS", "Galettes de pomme de terre (carton)", 0, 0, ""),
+    ("4. LÉGUMES & FRUITS", "Tomates fraîches (kg / cagette)", 0, 0, ""),
+    ("4. LÉGUMES & FRUITS", "Tomates séchées (bocal kg)", 0, 0, ""),
+    ("4. LÉGUMES & FRUITS", "Roquette (sachet 500g)", 0, 0, ""),
+    ("4. LÉGUMES & FRUITS", "Salade verte (cagette / sachet)", 0, 0, ""),
+    ("4. LÉGUMES & FRUITS", "Olives noires (seau / bocal)", 0, 0, ""),
+    ("4. LÉGUMES & FRUITS", "Câpres (bocal)", 0, 0, ""),
+    ("4. LÉGUMES & FRUITS", "Ananas (boîte)", 0, 0, ""),
+    ("4. LÉGUMES & FRUITS", "Ail & Persil (botte / kg)", 0, 0, ""),
+    ("4. LÉGUMES & FRUITS", "Aneth / Citron (botte / pièce)", 0, 0, ""),
+    ("4. LÉGUMES & FRUITS", "Pignons de pin / Noix (sachet kg)", 0, 0, ""),
 
     # 5. SAUCES & ÉPICES
-    ("5. SAUCES & ÉPICES", "Ketchup (bidon / flacon)", 4, 0, ""),
-    ("5. SAUCES & ÉPICES", "Sauce piquante (bouteille)", 3, 0, ""),
-    ("5. SAUCES & ÉPICES", "Tabasco (bouteille)", 2, 0, ""),
-    ("5. SAUCES & ÉPICES", "Moutarde (pot kg)", 2, 0, ""),
-    ("5. SAUCES & ÉPICES", "Sauce Blanche (flacon / bidon)", 4, 0, ""),
-    ("5. SAUCES & ÉPICES", "Sauce BBQ (flacon / bidon)", 3, 0, ""),
-    ("5. SAUCES & ÉPICES", "Sauce Sweet Chili (bouteille)", 3, 0, ""),
-    ("5. SAUCES & ÉPICES", "Sauce Cheddar (poche / flacon)", 4, 0, ""),
-    ("5. SAUCES & ÉPICES", "Crème Balsamique (bouteille)", 2, 0, ""),
-    ("5. SAUCES & ÉPICES", "Miel (pot / flacon)", 2, 0, ""),
-    ("5. SAUCES & ÉPICES", "Confiture de figue (pot)", 2, 0, ""),
-    ("5. SAUCES & ÉPICES", "Épices orientales (pot / sachet)", 2, 0, ""),
-    ("5. SAUCES & ÉPICES", "Curry (pot / sachet)", 2, 0, ""),
-    ("5. SAUCES & ÉPICES", "Épices mexicaines (pot / sachet)", 2, 0, ""),
-    ("5. SAUCES & ÉPICES", "Origan / Herbes de Provence (sachet)", 2, 0, ""),
+    ("5. SAUCES & ÉPICES", "Ketchup (bidon / flacon)", 0, 0, ""),
+    ("5. SAUCES & ÉPICES", "Sauce piquante (bouteille)", 0, 0, ""),
+    ("5. SAUCES & ÉPICES", "Tabasco (bouteille)", 0, 0, ""),
+    ("5. SAUCES & ÉPICES", "Moutarde (pot kg)", 0, 0, ""),
+    ("5. SAUCES & ÉPICES", "Sauce Blanche (flacon / bidon)", 0, 0, ""),
+    ("5. SAUCES & ÉPICES", "Sauce BBQ (flacon / bidon)", 0, 0, ""),
+    ("5. SAUCES & ÉPICES", "Sauce Sweet Chili (bouteille)", 0, 0, ""),
+    ("5. SAUCES & ÉPICES", "Sauce Cheddar (poche / flacon)", 0, 0, ""),
+    ("5. SAUCES & ÉPICES", "Crème Balsamique (bouteille)", 0, 0, ""),
+    ("5. SAUCES & ÉPICES", "Miel (pot / flacon)", 0, 0, ""),
+    ("5. SAUCES & ÉPICES", "Confiture de figue (pot)", 0, 0, ""),
+    ("5. SAUCES & ÉPICES", "Épices orientales (pot / sachet)", 0, 0, ""),
+    ("5. SAUCES & ÉPICES", "Curry (pot / sachet)", 0, 0, ""),
+    ("5. SAUCES & ÉPICES", "Épices mexicaines (pot / sachet)", 0, 0, ""),
+    ("5. SAUCES & ÉPICES", "Origan / Herbes de Provence (sachet)", 0, 0, ""),
 
     # 6. TAPAS & FRITES
-    ("6. TAPAS & FRITES", "Frites Deeps (carton kg)", 6, 0, ""),
-    ("6. TAPAS & FRITES", "Frites patates douces (carton kg)", 4, 0, ""),
-    ("6. TAPAS & FRITES", "Chicken Wings (carton)", 4, 0, ""),
-    ("6. TAPAS & FRITES", "Crousti Tenders (carton)", 5, 0, ""),
-    ("6. TAPAS & FRITES", "Bouchées Camembert (carton)", 3, 0, ""),
-    ("6. TAPAS & FRITES", "Chili Cheese Nuggets (carton)", 4, 0, ""),
-    ("6. TAPAS & FRITES", "Tomato Mozza Melters (carton)", 3, 0, ""),
-    ("6. TAPAS & FRITES", "Nacho Cheese (carton)", 3, 0, ""),
-    ("6. TAPAS & FRITES", "Onions Rings (carton)", 4, 0, ""),
+    ("6. TAPAS & FRITES", "Frites Deeps (carton kg)", 0, 0, ""),
+    ("6. TAPAS & FRITES", "Frites patates douces (carton kg)", 0, 0, ""),
+    ("6. TAPAS & FRITES", "Chicken Wings (carton)", 0, 0, ""),
+    ("6. TAPAS & FRITES", "Crousti Tenders (carton)", 0, 0, ""),
+    ("6. TAPAS & FRITES", "Bouchées Camembert (carton)", 0, 0, ""),
+    ("6. TAPAS & FRITES", "Chili Cheese Nuggets (carton)", 0, 0, ""),
+    ("6. TAPAS & FRITES", "Tomato Mozza Melters (carton)", 0, 0, ""),
+    ("6. TAPAS & FRITES", "Nacho Cheese (carton)", 0, 0, ""),
+    ("6. TAPAS & FRITES", "Onions Rings (carton)", 0, 0, ""),
 
     # 7. EMBALLAGES
-    ("7. EMBALLAGES", "Boîtes Pizza 25 cm (paquet 100)", 4, 0, ""),
-    ("7. EMBALLAGES", "Boîtes Pizza 33 cm (paquet 100)", 8, 0, ""),
-    ("7. EMBALLAGES", "Boîtes Pizza 40 cm (paquet 50)", 4, 0, ""),
-    ("7. EMBALLAGES", "Boîtes Pizza Enfant 18 cm (paquet 100)", 3, 0, ""),
-    ("7. EMBALLAGES", "Serviettes en papier (carton / paquet)", 5, 0, ""),
-    ("7. EMBALLAGES", "Sacs à emporter Kraft (paquet / carton)", 4, 0, ""),
-    ("7. EMBALLAGES", "Papiers burger (paquet)", 3, 0, ""),
-    ("7. EMBALLAGES", "Pots à sauce (carton 1000)", 2, 0, ""),
+    ("7. EMBALLAGES", "Boîtes Pizza 25 cm (paquet 100)", 0, 0, ""),
+    ("7. EMBALLAGES", "Boîtes Pizza 33 cm (paquet 100)", 0, 0, ""),
+    ("7. EMBALLAGES", "Boîtes Pizza 40 cm (paquet 50)", 0, 0, ""),
+    ("7. EMBALLAGES", "Boîtes Pizza Enfant 18 cm (paquet 100)", 0, 0, ""),
+    ("7. EMBALLAGES", "Serviettes en papier (carton / paquet)", 0, 0, ""),
+    ("7. EMBALLAGES", "Sacs à emporter Kraft (paquet / carton)", 0, 0, ""),
+    ("7. EMBALLAGES", "Papiers burger (paquet)", 0, 0, ""),
+    ("7. EMBALLAGES", "Pots à sauce (carton 1000)", 0, 0, ""),
 
     # 8. HYGIÈNE & ENTRETIEN
-    ("8. HYGIÈNE & ENTRETIEN", "Liquide vaisselle plonge (bidon 5L)", 3, 0, ""),
-    ("8. HYGIÈNE & ENTRETIEN", "Tampons à récurer / Éponges (paquet 10)", 3, 0, ""),
-    ("8. HYGIÈNE & ENTRETIEN", "Sel adoucisseur lave-vaisselle (sac 10kg)", 2, 0, ""),
-    ("8. HYGIÈNE & ENTRETIEN", "Savon machine lave-vaisselle (bidon 10L)", 2, 0, ""),
-    ("8. HYGIÈNE & ENTRETIEN", "Liquide de rinçage machine (bidon 5L)", 2, 0, ""),
-    ("8. HYGIÈNE & ENTRETIEN", "Dégraissant cuisine pro (bidon / spray)", 3, 0, ""),
-    ("8. HYGIÈNE & ENTRETIEN", "Désinfectant surfaces alimentaires (spray 750ml)", 4, 0, ""),
-    ("8. HYGIÈNE & ENTRETIEN", "Rouleaux essuie-tout pro (pack bobines)", 4, 0, ""),
-    ("8. HYGIÈNE & ENTRETIEN", "Sacs poubelle 100L (rouleau)", 4, 0, "")
+    ("8. HYGIÈNE & ENTRETIEN", "Liquide vaisselle plonge (bidon 5L)", 0, 0, ""),
+    ("8. HYGIÈNE & ENTRETIEN", "Tampons à récurer / Éponges (paquet 10)", 0, 0, ""),
+    ("8. HYGIÈNE & ENTRETIEN", "Sel adoucisseur lave-vaisselle (sac 10kg)", 0, 0, ""),
+    ("8. HYGIÈNE & ENTRETIEN", "Savon machine lave-vaisselle (bidon 10L)", 0, 0, ""),
+    ("8. HYGIÈNE & ENTRETIEN", "Liquide de rinçage machine (bidon 5L)", 0, 0, ""),
+    ("8. HYGIÈNE & ENTRETIEN", "Dégraissant cuisine pro (bidon / spray)", 0, 0, ""),
+    ("8. HYGIÈNE & ENTRETIEN", "Désinfectant surfaces alimentaires (spray 750ml)", 0, 0, ""),
+    ("8. HYGIÈNE & ENTRETIEN", "Rouleaux essuie-tout pro (pack bobines)", 0, 0, ""),
+    ("8. HYGIÈNE & ENTRETIEN", "Sacs poubelle 100L (rouleau)", 0, 0, "")
 ]
 
 def init_db():
     conn = sqlite3.connect(DB_FILE)
     c = conn.cursor()
-    c.execute("SELECT count(*) FROM sqlite_master WHERE type='table' AND name='stock'")
-    table_exists = c.fetchone()[0] > 0
-    
-    # Auto-repair if previous buggy schema inverted "Sacs poubelle" or par levels are all 0
-    recreate = False
-    if table_exists:
-        c.execute("SELECT count(*) FROM stock WHERE category LIKE '%Sacs poubelle%'")
-        if c.fetchone()[0] > 0:
-            recreate = True
-        c.execute("SELECT sum(par_level) FROM stock")
-        val = c.fetchone()[0]
-        if val is None or val == 0:
-            recreate = True
-    else:
-        recreate = True
-
-    if recreate:
-        c.execute("DROP TABLE IF EXISTS stock")
-        c.execute("""
-            CREATE TABLE stock (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                category TEXT,
-                item TEXT UNIQUE,
-                par_level REAL DEFAULT 0,
-                current_count REAL DEFAULT 0,
-                notes TEXT DEFAULT ''
-            )
-        """)
-        c.executemany("""
-            INSERT INTO stock (category, item, par_level, current_count, notes)
-            VALUES (?, ?, ?, ?, ?)
-        """, CATALOG)
-        conn.commit()
+    # Recreate the table cleanly with proper schema
+    c.execute("DROP TABLE IF EXISTS stock")
+    c.execute("""
+        CREATE TABLE stock (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            category TEXT,
+            item TEXT UNIQUE,
+            par_level REAL DEFAULT 0,
+            current_count REAL DEFAULT 0,
+            notes TEXT DEFAULT ''
+        )
+    """)
+    c.executemany("""
+        INSERT INTO stock (category, item, par_level, current_count, notes)
+        VALUES (?, ?, ?, ?, ?)
+    """, CATALOG)
+    conn.commit()
     conn.close()
 
-init_db()
+# Only run once if empty or resetting
+conn = sqlite3.connect(DB_FILE)
+c = conn.cursor()
+c.execute("SELECT count(*) FROM sqlite_master WHERE type='table' AND name='stock'")
+exists = c.fetchone()[0] > 0
+conn.close()
+if not exists:
+    init_db()
 
 def get_stock():
     conn = sqlite3.connect(DB_FILE)
@@ -253,8 +236,23 @@ def update_item_value(item_id, current_count, par_level, notes):
     conn.commit()
     conn.close()
 
+def reset_all_to_zero():
+    conn = sqlite3.connect(DB_FILE)
+    c = conn.cursor()
+    c.execute("UPDATE stock SET current_count = 0, par_level = 0")
+    conn.commit()
+    conn.close()
+
 # --- Title & Top Header ---
 st.title("🍕 Pizza Bonici Rouffiac: Inventory")
+
+# Quick button to reset all values to 0 anytime
+with st.sidebar:
+    st.header("⚙️ Paramètres")
+    if st.button("🔄 Réinitialiser tous les stocks à 0"):
+        reset_all_to_zero()
+        st.success("Tous les articles ont été remis à 0.")
+        st.rerun()
 
 df = get_stock()
 
